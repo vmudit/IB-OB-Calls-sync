@@ -1,0 +1,17 @@
+{
+  "name": "ib-ob-sync",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sync inbound and outbound call counts from BigQuery onto existing HubSpot contacts.",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node scripts/sync-contacts.js",
+    "sync": "node scripts/sync-contacts.js --live"
+  },
+  "dependencies": {
+    "@google-cloud/bigquery": "^8.1.1",
+    "axios": "^1.13.2"
+  }
+}

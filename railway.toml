@@ -1,0 +1,11 @@
+# The process must exit when the run finishes.
+# Railway no longer applies this file on brand-new services. Set the same
+# start command, cron, and restart policy in the service settings as well.
+
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+startCommand = "node scripts/sync-contacts.js --live"
+restartPolicyType = "NEVER"
+cronSchedule = "*/10 * * * *"
