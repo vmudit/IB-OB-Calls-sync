@@ -56,4 +56,5 @@ FROM (
 ) AS joined
 WHERE email IS NOT NULL
   AND (IB_Calls IS NOT NULL OR OB_Calls IS NOT NULL)
+  AND companyid = 570491
 ORDER BY companyid DESC
