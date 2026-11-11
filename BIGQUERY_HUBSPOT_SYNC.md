@@ -34,7 +34,7 @@ flowchart TD
 | `sql/calls.sql` | One query. `IBC_flag` and `OBC_flag` are written to the contact properties named by `HUBSPOT_IB_PROPERTY` and `HUBSPOT_OB_PROPERTY` as dropdown values `true` and `false`. |
 | `lib/bigquery.js` | Build a BigQuery client from the service-account JSON in the env var. Run `sql/calls.sql`. Return rows. |
 | `lib/hubspot.js` | `Authorization: Bearer ${HUBSPOT_TOKEN}` against `https://api.hubapi.com`. Batch-read contacts by email. Batch-update `ib_15` and `ob_15`. One retry after 1.5s on HTTP 429. |
-| `scripts/sync-contacts.js` | Cron entry. Check env. Refuse to write unless both `--live` and `CONFIRM_LIVE_RUN=yes-really-run-live` are set. Normalize email, diff, then patch. |
+| `scripts/sync-contacts.js` | Cron entry. Check env. Refuse to write unless both `--live` and `CONFIRM_LIVE_RUN=yes` are set. Normalize email, diff, then patch. |
 
 No Express app and no webhook route. Shape: GitHub repo, Railway service, start command, cron schedule in the Railway dashboard.
 
@@ -78,7 +78,7 @@ Send a property only when the SQL value is non-empty and different from the curr
 1. Push the repo to GitHub and create a Railway service from it.
 2. Variables, set in Railway: `HUBSPOT_TOKEN`, `BQ_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS_JSON` (the service-account JSON as one variable), `HUBSPOT_IB_PROPERTY`, and `HUBSPOT_OB_PROPERTY`. The contact property names are read only from those two variables. Leave `CONFIRM_LIVE_RUN` unset until a dry run looks right.
 3. Cron schedule: `*/10 * * * *`. [Railway schedules cron in UTC](https://docs.railway.com/cron-jobs). IST is UTC+5:30, and this expression still runs every 10 minutes in IST, at minute 30, 40, 50, 00, 10, and 20.
-4. First runs only log diffs. Add `CONFIRM_LIVE_RUN=yes-really-run-live` when you want writes.
+4. First runs only log diffs. Add `CONFIRM_LIVE_RUN=yes` when you want writes.
 
 The BigQuery service account needs `bigquery.jobs.create` and read access to the tables in `sql/calls.sql`.
 
@@ -106,6 +106,6 @@ in GOOGLE_APPLICATION_CREDENTIALS_JSON. Never commit credentials.
 Files: package.json, railway.toml, .env.example, sql/calls.sql,
 lib/bigquery.js, lib/hubspot.js, scripts/sync-contacts.js.
 Start command: node scripts/sync-contacts.js --live.
-Writes only if CONFIRM_LIVE_RUN=yes-really-run-live is also set. Otherwise log the diff and exit.
+Writes only if CONFIRM_LIVE_RUN=yes is also set. Otherwise log the diff and exit.
 Process must exit when the run finishes.
 ```

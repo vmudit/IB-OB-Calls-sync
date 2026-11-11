@@ -3,7 +3,7 @@
 const { assertConfig, fetchCallRows } = require('../lib/bigquery');
 const { readContactsByEmail, updateContacts } = require('../lib/hubspot');
 
-const LIVE_CONFIRMATION = 'yes-really-run-live';
+const LIVE_CONFIRMATION = 'yes';
 const DIFF_LOG_LIMIT = 100;
 const SAMPLE_LIMIT = 20;
 
@@ -197,7 +197,7 @@ function logSamples(label, updates) {
 async function main() {
   const started = Date.now();
   const liveFlag = process.argv.includes('--live');
-  const confirmed = (process.env.CONFIRM_LIVE_RUN || '').trim() === LIVE_CONFIRMATION;
+  const confirmed = (process.env.CONFIRM_LIVE_RUN || '').trim().toLowerCase() === LIVE_CONFIRMATION;
   const write = liveFlag && confirmed;
 
   const missing = [
@@ -224,7 +224,7 @@ async function main() {
   if (write) {
     console.log('Mode: live. Changed contacts will be updated.');
   } else if (liveFlag) {
-    console.log('Mode: dry run. --live is set, but CONFIRM_LIVE_RUN is not yes-really-run-live.');
+    console.log('Mode: dry run. Set CONFIRM_LIVE_RUN=yes to write. no, or an empty value, stays a dry run.');
   } else {
     console.log('Mode: dry run. The start command must include --live before any write.');
   }
