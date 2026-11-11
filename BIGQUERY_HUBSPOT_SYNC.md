@@ -11,7 +11,7 @@ flowchart TD
   CRON["Railway cron every 10 min<br/>*/10 * * * *"] --> SCRIPT["node scripts/sync-contacts.js"]
   SCRIPT --> ENV{"HUBSPOT_TOKEN and<br/>BigQuery creds set?"}
   ENV -->|no| EXIT1["exit with error"]
-  ENV -->|yes| SQL["Run sql/calls.sql<br/>rows: email, IB_Calls, OB_Calls"]
+  ENV -->|yes| SQL["Run sql/calls.sql<br/>rows: email, IBC_flag, OBC_flag"]
   SQL --> NORM["lowercase and trim email<br/>drop rows with no email"]
   NORM --> READ["POST /crm/v3/objects/contacts/batch/read<br/>idProperty = email<br/>batches of 100"]
   READ --> MISS["email not in HubSpot → skip"]
@@ -31,7 +31,7 @@ flowchart TD
 | `package.json` | Node 18+. Dependencies: `@google-cloud/bigquery`, `axios`. Script: `"start": "node scripts/sync-contacts.js"`. |
 | `railway.toml` | Nixpacks build. `startCommand = "node scripts/sync-contacts.js --live"`. The process must exit when the run finishes. |
 | `.env.example` | Empty placeholders only: `HUBSPOT_TOKEN`, `BQ_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS_JSON`, `CONFIRM_LIVE_RUN`. |
-| `sql/calls.sql` | One query. Returns `email`, `IB_Calls`, and `OB_Calls`. Those counts are written to the contact properties `ib_15` and `ob_15`. |
+| `sql/calls.sql` | One query. `IBC_flag` and `OBC_flag` are written to the contact properties named by `HUBSPOT_IB_PROPERTY` and `HUBSPOT_OB_PROPERTY` as dropdown values `true` and `false`. |
 | `lib/bigquery.js` | Build a BigQuery client from the service-account JSON in the env var. Run `sql/calls.sql`. Return rows. |
 | `lib/hubspot.js` | `Authorization: Bearer ${HUBSPOT_TOKEN}` against `https://api.hubapi.com`. Batch-read contacts by email. Batch-update `ib_15` and `ob_15`. One retry after 1.5s on HTTP 429. |
 | `scripts/sync-contacts.js` | Cron entry. Check env. Refuse to write unless both `--live` and `CONFIRM_LIVE_RUN=yes-really-run-live` are set. Normalize email, diff, then patch. |
@@ -88,7 +88,7 @@ The BigQuery service account needs `bigquery.jobs.create` and read access to the
 Build a Node 18 cron job, GitHub repo deployed on Railway. No web server.
 
 Every 10 minutes (Railway cron */10 * * * *), run sql/calls.sql in BigQuery.
-The query returns email, IB_Calls, and OB_Calls.
+The query returns email, IBC_flag, and OBC_flag. Those booleans are written as the dropdown values true and false.
 Match existing HubSpot contacts by email (lowercase, trimmed).
 Update only the contact properties named by HUBSPOT_IB_PROPERTY and HUBSPOT_OB_PROPERTY.
 Skip emails that are not already contacts. Do not create contacts.

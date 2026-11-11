@@ -46,13 +46,14 @@ function primitive(value) {
   return null;
 }
 
-function normalizeCount(value) {
+function normalizeFlag(value) {
   const raw = primitive(value);
+  if (typeof raw === 'boolean') return raw ? 'true' : 'false';
   if (raw == null) return null;
-  if (typeof raw === 'string' && raw.trim() === '') return null;
-  const numeric = typeof raw === 'number' ? raw : Number(raw);
-  if (!Number.isFinite(numeric)) return null;
-  return String(Math.trunc(numeric));
+  const text = String(raw).trim().toLowerCase();
+  if (text === 'true' || text === 'yes') return 'true';
+  if (text === 'false' || text === 'no') return 'false';
+  return null;
 }
 
 function field(row, names) {
@@ -86,8 +87,8 @@ function indexRows(rows) {
       continue;
     }
 
-    const ib = normalizeCount(field(row, ['IB_Calls', 'ib_calls', 'IB_calls']));
-    const ob = normalizeCount(field(row, ['OB_Calls', 'ob_calls', 'OB_calls']));
+    const ib = normalizeFlag(field(row, ['IBC_flag', 'ibc_flag']));
+    const ob = normalizeFlag(field(row, ['OBC_flag', 'obc_flag']));
     if (ib == null && ob == null) {
       skipped += 1;
       continue;
@@ -115,10 +116,9 @@ function indexRows(rows) {
 
 function valuesDiffer(current, next) {
   if (next == null) return false;
+  const nextFlag = normalizeFlag(next);
+  if (nextFlag != null) return normalizeFlag(current) !== nextFlag;
   if (current == null || String(current).trim() === '') return true;
-  const left = Number(current);
-  const right = Number(next);
-  if (Number.isFinite(left) && Number.isFinite(right)) return left !== right;
   return String(current).trim() !== String(next).trim();
 }
 
@@ -275,7 +275,7 @@ if (require.main === module) {
 }
 
 module.exports = {
-  normalizeCount,
+  normalizeFlag,
   valuesDiffer,
   indexRows,
   planUpdates,
