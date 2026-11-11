@@ -7,11 +7,14 @@ const LIVE_CONFIRMATION = 'yes-really-run-live';
 const DIFF_LOG_LIMIT = 100;
 const SAMPLE_LIMIT = 20;
 
-function propertyName(envName, fallback) {
+function propertyName(envName) {
   const raw = process.env[envName];
-  const value = typeof raw === 'string' && raw.trim() !== '' ? raw.trim() : fallback;
+  if (typeof raw !== 'string' || raw.trim() === '') {
+    throw new Error(`Missing required environment variable: ${envName}`);
+  }
+  const value = raw.trim();
   if (!/^[A-Za-z][A-Za-z0-9_]{0,100}$/.test(value)) {
-    throw new Error(`${envName} is not a valid HubSpot property name`);
+    throw new Error(`${envName} is not a valid HubSpot contact property name`);
   }
   return value;
 }
@@ -197,15 +200,19 @@ async function main() {
   const confirmed = (process.env.CONFIRM_LIVE_RUN || '').trim() === LIVE_CONFIRMATION;
   const write = liveFlag && confirmed;
 
-  const missing = ['HUBSPOT_TOKEN', 'BQ_PROJECT_ID', 'GOOGLE_APPLICATION_CREDENTIALS_JSON'].filter(
-    (name) => typeof process.env[name] !== 'string' || process.env[name].trim() === ''
-  );
+  const missing = [
+    'HUBSPOT_TOKEN',
+    'BQ_PROJECT_ID',
+    'GOOGLE_APPLICATION_CREDENTIALS_JSON',
+    'HUBSPOT_IB_PROPERTY',
+    'HUBSPOT_OB_PROPERTY',
+  ].filter((name) => typeof process.env[name] !== 'string' || process.env[name].trim() === '');
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
 
-  const ibProperty = propertyName('HUBSPOT_IB_PROPERTY', 'ib_15');
-  const obProperty = propertyName('HUBSPOT_OB_PROPERTY', 'ob_15');
+  const ibProperty = propertyName('HUBSPOT_IB_PROPERTY');
+  const obProperty = propertyName('HUBSPOT_OB_PROPERTY');
   if (ibProperty === obProperty) {
     throw new Error('HUBSPOT_IB_PROPERTY and HUBSPOT_OB_PROPERTY must be different');
   }

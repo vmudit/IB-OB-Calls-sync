@@ -1,6 +1,8 @@
 # The process must exit when the run finishes.
 # Railway no longer applies this file on brand-new services. Set the same
 # start command, cron, and restart policy in the service settings as well.
+# Railway cron is UTC only. */10 still runs every 10 minutes in IST (UTC+5:30),
+# at minute 30, 40, 50, 00, 10, and 20 India time.
 
 [build]
 builder = "NIXPACKS"

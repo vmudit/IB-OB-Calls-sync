@@ -76,8 +76,8 @@ Send a property only when the SQL value is non-empty and different from the curr
 ## Railway
 
 1. Push the repo to GitHub and create a Railway service from it.
-2. Variables: `HUBSPOT_TOKEN`, `BQ_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS_JSON` (the service-account JSON as one variable). Leave `CONFIRM_LIVE_RUN` unset until a dry run looks right.
-3. Cron schedule: `*/10 * * * *`.
+2. Variables, set in Railway: `HUBSPOT_TOKEN`, `BQ_PROJECT_ID`, `GOOGLE_APPLICATION_CREDENTIALS_JSON` (the service-account JSON as one variable), `HUBSPOT_IB_PROPERTY`, and `HUBSPOT_OB_PROPERTY`. The contact property names are read only from those two variables. Leave `CONFIRM_LIVE_RUN` unset until a dry run looks right.
+3. Cron schedule: `*/10 * * * *`. [Railway schedules cron in UTC](https://docs.railway.com/cron-jobs). IST is UTC+5:30, and this expression still runs every 10 minutes in IST, at minute 30, 40, 50, 00, 10, and 20.
 4. First runs only log diffs. Add `CONFIRM_LIVE_RUN=yes-really-run-live` when you want writes.
 
 The BigQuery service account needs `bigquery.jobs.create` and read access to the tables in `sql/calls.sql`.
@@ -90,7 +90,7 @@ Build a Node 18 cron job, GitHub repo deployed on Railway. No web server.
 Every 10 minutes (Railway cron */10 * * * *), run sql/calls.sql in BigQuery.
 The query returns email, IB_Calls, and OB_Calls.
 Match existing HubSpot contacts by email (lowercase, trimmed).
-Update only the contact properties ib_15 and ob_15.
+Update only the contact properties named by HUBSPOT_IB_PROPERTY and HUBSPOT_OB_PROPERTY.
 Skip emails that are not already contacts. Do not create contacts.
 Skip a property when the SQL value is empty. Skip the contact when both values
 already match HubSpot.
