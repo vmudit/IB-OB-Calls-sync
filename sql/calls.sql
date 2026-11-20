@@ -3,11 +3,23 @@
 -- This is a full snapshot. The job writes a HubSpot property only when the value changed.
 
 WITH trialing_customers AS (
-    SELECT DISTINCT company_id AS companyid
-    FROM analytics_reporting.fact_user_master
-    WHERE date_level = 'Day'
-      AND date = CURRENT_DATE() - 1
-      AND stripe_subscription_status = 'Trialing'
+    SELECT * FROM (
+        SELECT companyid, account_status, source_timestamp FROM (
+            SELECT
+                companyid,
+                account_status,
+                TIMESTAMP_MILLIS(datastream_metadata.source_timestamp) AS source_timestamp
+            FROM jclive.users
+        ) AS user_snapshots
+        QUALIFY ROW_NUMBER() OVER (PARTITION BY companyid ORDER BY source_timestamp DESC) = 1
+    ) AS latest_status
+    WHERE CAST(companyid AS STRING) IN (
+        SELECT DISTINCT CAST(company_id AS STRING)
+        FROM analytics_reporting.fact_user_master
+        WHERE date_level = 'Day'
+          AND date = CURRENT_DATE() - 1
+          AND stripe_subscription_status = 'Trialing'
+    )
 ),
 
 csm_emails AS (
@@ -36,6 +48,8 @@ SELECT
 FROM (
     SELECT
         t.companyid,
+        t.account_status,
+        t.source_timestamp,
         e.email,
         c.IB_Calls,
         c.OB_Calls
