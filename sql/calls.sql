@@ -11,10 +11,15 @@ WITH trialing_customers AS (
                 TIMESTAMP_MILLIS(datastream_metadata.source_timestamp) AS source_timestamp
             FROM jclive.users
         ) AS user_snapshots
-        WHERE account_status IS NOT NULL
         QUALIFY ROW_NUMBER() OVER (PARTITION BY companyid ORDER BY source_timestamp DESC) = 1
     ) AS latest_status
-    WHERE account_status = 'TRIALING'
+    WHERE CAST(companyid AS STRING) IN (
+        SELECT DISTINCT CAST(company_id AS STRING)
+        FROM analytics_reporting.fact_user_master
+        WHERE date_level = 'Day'
+          AND date = CURRENT_DATE() - 1
+          AND stripe_subscription_status = 'Trialing'
+    )
 ),
 
 csm_emails AS (
