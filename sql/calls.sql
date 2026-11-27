@@ -33,8 +33,8 @@ call_counts AS (
     SELECT * FROM (
         SELECT DISTINCT
             companyId AS company_id,
-            COUNT(CASE WHEN direction = 1 THEN entityId ELSE NULL END) AS IB_Calls,
-            COUNT(CASE WHEN direction = 0 THEN entityId ELSE NULL END) AS OB_Calls
+            COUNT(CASE WHEN direction = 1 AND status IN (2, 7) THEN twilioEntityId ELSE NULL END) AS IB_Calls,
+            COUNT(CASE WHEN direction = 0 AND status IN (2, 7) THEN twilioEntityId ELSE NULL END) AS OB_Calls
         FROM datastreamsyncedtables.balance_call_logs
         GROUP BY 1
     ) AS counts
@@ -61,5 +61,5 @@ FROM (
 ) AS joined
 WHERE email IS NOT NULL
   AND (IB_Calls IS NOT NULL OR OB_Calls IS NOT NULL)
-  AND companyid = 570491
+  -- AND companyid = 570491
 ORDER BY companyid DESC
